@@ -3,10 +3,10 @@
 #include <stm32f1xx.h>
 
 #include "config.hpp"
-if __cplusplus
-extern "C" {
-#endif
+#include "encoder.h"
 #include "encoder.hpp"
+
+EncoderABZ encoder;
 
 EncoderABZ::EncoderABZ() {
     upperCounter = 0;
@@ -21,6 +21,10 @@ void EncoderABZ::Init() {
     Z_Init_32bit();
     //SysTick_Init();
     isInitialized = true;
+}
+
+bool EncoderABZ::IsInitialized() {
+    return isInitialized;
 }
 
 uint16_t EncoderABZ::GetRpm(void) {
@@ -183,24 +187,20 @@ void EncoderABZ::Z_Init_32bit(void) {
     NVIC_EnableIRQ(TIM4_IRQn);
 }
 
-void TIM4_IRQHandler_CXX(EncoderABZ& encoder) {
-    if(encoder.IsInitialized()){
-        encoder.UpdateIndex();
+    void TIM4_IRQHandler_CXX() {
+        if(encoder.IsInitialized()){
+            encoder.UpdateIndex();
+        }
     }
-}
 
-void TIM3_IRQHandler_CXX(EncoderABZ& encoder) {
-    if(encoder.IsInitialized()){
-        encoder.UpdateEncoderUpperCount();
+    void TIM3_IRQHandler_CXX() {
+        if(encoder.IsInitialized()){
+            encoder.UpdateEncoderUpperCount();
+        }
     }
-}
 
-void SysTick_Handler_CXX(EncoderABZ& encoder) {
-    if(encoder.IsInitialized()){
-        encoder.UpdateRPM();
+    void SysTick_Handler_CXX() {
+        if(encoder.IsInitialized()){
+            encoder.UpdateRPM();
+        }
     }
-}
-
-#if __cplusplus
-}
-#endif

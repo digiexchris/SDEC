@@ -1,18 +1,7 @@
-#pragma once
-extern "C" {
-    #include <stm32f1xx.h>
+#ifndef __ENCODER_HPP
+#define __ENCODER_HPP
 
-    void TIM4_IRQHandler_CXX(EncoderABZ& encoder);
-    void TIM3_IRQHandler_CXX(EncoderABZ& encoder);
-    void SysTick_Handler_CXX(EncoderABZ& encoder);
-}
-
-// Function declarations
-enum class EncoderMultMode {
-    X1,
-    X2,
-    X4
-};
+#include <stm32f1xx.h>
 
 class EncoderABZ {
     public:
@@ -41,3 +30,5 @@ class EncoderABZ {
         volatile uint16_t rpm; 
         volatile uint32_t elapsedTime;
 };
+
+#endif // __ENCODER_HPP

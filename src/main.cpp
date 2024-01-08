@@ -3,11 +3,12 @@ extern "C" {
 }
 #include <stdio.h>
 #include <core_cm3.h>
-#include "main.hpp"
 #include "encoder.hpp"
 #include "debug.hpp"
 
 #include <etl/string.h>
+
+extern EncoderABZ encoder;
 
 /**
  * Pinout:
@@ -25,10 +26,6 @@ extern "C" {
  * 3. Initializes TIM3 as a 32-bit counter
  * 4. Initializes TIM4 as an input capture timer for the Z signal
 */
-
-EncoderABZ encoder;
-
-
 
 int main(void) {
 
