@@ -25,18 +25,65 @@ extern EncoderABZ encoder;
  * 2. Initializes TIM2 as an encoder counter
  * 3. Initializes TIM3 as a 32-bit counter
  * 4. Initializes TIM4 as an input capture timer for the Z signal
-*/
+*/\
+
+void SystemClockInit(void) {
+    // Enable HSE (High-Speed External) oscillator
+    RCC->CR |= RCC_CR_HSEON;
+
+    // Wait until HSE is ready
+    while (!(RCC->CR & RCC_CR_HSERDY)) {}
+
+    // Set the PLL multiplication factor to 9 (8 MHz * 9 = 72 MHz)
+    RCC->CFGR |= RCC_CFGR_PLLMULL9;
+
+    // Set PLL source to HSE
+    RCC->CFGR |= RCC_CFGR_PLLSRC;
+
+    // Enable PLL
+    RCC->CR |= RCC_CR_PLLON;
+
+    // Wait until PLL is ready
+    while (!(RCC->CR & RCC_CR_PLLRDY)) {}
+
+    // Set AHB prescaler to 1
+    RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
+
+    // Set APB1 prescaler to 2 (36 MHz max for APB1)
+    RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;
+
+    // Set APB2 prescaler to 1
+    RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;
+
+    // Select PLL as the system clock source
+    RCC->CFGR |= RCC_CFGR_SW_PLL;
+
+    // Wait until PLL is used as the system clock source
+    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) {}
+
+    // Update the SystemCoreClock variable
+    SystemCoreClockUpdate();
+}
+
 
 int main(void) {
-
+    SystemClockInit();
     DebugLogger& debugLog = DebugLog::instance();
+    debugLog.Init();
     encoder.Init();
 
     etl::string<100> debugOutput;
 
     while (1) {
         
-        debugLog.Debug(debugLog.Format("Position: %lu, Angle: %lu/%lu, RPM: %lu\r\n", encoder.GetFullIndexCounts(),encoder.GetAngularPositionInCounts(), encoder.GetRpm()).c_str());
-        for (int i = 0; i < 1000000; i++); // Delay
+        debugLog.Debug(debugLog.Format("Position: %lu, Angle: %hu/%hu, RPM: %hu\r\n", 
+        encoder.GetFullIndexCounts(), 
+        encoder.GetAngularPositionInCounts(), 
+        encoder.GetTotalAngularCounts(), // Assuming this is the correct method for the third value
+        encoder.GetRpm() 
+        ).c_str());
+
+        
+        for (int i = 0; i < portTICK; i++); // Delay
     }
 }

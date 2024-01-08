@@ -8,18 +8,17 @@ extern "C" {
 
 class DebugLogger {
 public:
-// Singleton access through etl::singleton
-    
+    // Singleton access through etl::singleton<DebugLogger>::instance()
+    DebugLogger() {
+        Init(); // Call Init inside the constructor
+    }
     void Init(void);
     void Debug(const char* str, const char* func = __FUNCTION__ , uint16_t line = __LINE__);
     void Debug(etl::string<100> str,  const char* func = __FUNCTION__ , uint16_t line = __LINE__);
     etl::string<100> Format(const char* str, ...);
 
 private:
-    // Private constructor
-    DebugLogger() {
-        Init(); // Call Init inside the constructor
-    }
+    
 
     // Other private methods
     void SendChar(const char ch);

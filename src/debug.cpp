@@ -2,6 +2,7 @@
 extern "C" {
     #include <stm32f1xx.h>
 }
+#include "helpers.hpp"
 #include "etl_profile.h"
 #include <stdio.h>
 #include <core_cm3.h>
@@ -10,9 +11,12 @@ extern "C" {
 
 void DebugLogger::Init() {
     USART2_Init();
+    SendString("DebugLogger initialized\r\n");
 }
 
 void DebugLogger::USART2_Init(void) {
+    SystemCoreClockUpdate();
+    
     // Enable clocks for USART2 and GPIOA
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
     RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
@@ -23,7 +27,7 @@ void DebugLogger::USART2_Init(void) {
     GPIOA->CRL |= GPIO_CRL_CNF3_0 | GPIO_CRL_MODE3_0; // USART2 RX
 
     // USART2 configuration
-    USART2->BRR = 72000000 / 9600;  // Assuming 72MHz PCLK1 for USART2
+    USART2->BRR = GetPCLK1Frequency() / 9600;  // Assuming 72MHz PCLK1 for USART2
     USART2->CR1 |= USART_CR1_TE | USART_CR1_RE; // Enable TX and RX
     USART2->CR1 |= USART_CR1_UE; // Enable USART2
 }

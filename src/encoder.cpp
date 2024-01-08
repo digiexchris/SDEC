@@ -52,8 +52,6 @@ uint32_t EncoderABZ::GetFullIndexCounts() {
 }
 
 void EncoderABZ::UpdateIndex() {
-    if (TIM4->SR & TIM_SR_CC1IF) {
-        // Capture event occurred
         //uint32_t capturedValue = TIM4->CCR1; // Read captured value (not used in this example)
 
         // Check the direction of TIM2
@@ -68,9 +66,6 @@ void EncoderABZ::UpdateIndex() {
             TIM2->CNT = 0; // Reset TIM2 count to COUNTS
             TIM4->CNT++; // Increment TIM4 count
         }
-
-        TIM4->SR &= ~TIM_SR_CC1IF; // Clear the capture/compare interrupt flag
-    }
 }
 
 //Handle the upper 16 bits of the counter
@@ -182,20 +177,30 @@ void EncoderABZ::Z_Init_32bit(void) {
 
     // Do interrupty things
     NVIC_SetPriority(TIM3_IRQn, ENCODER_PRIORITY);
-    NVIC_EnableIRQ(TIM3_IRQn);
     NVIC_SetPriority(TIM4_IRQn, ENCODER_PRIORITY);
+    NVIC_EnableIRQ(TIM3_IRQn);
     NVIC_EnableIRQ(TIM4_IRQn);
 }
 
     void TIM4_IRQHandler_CXX() {
-        if(encoder.IsInitialized()){
-            encoder.UpdateIndex();
-        }
+        if (TIM4->SR & TIM_SR_CC1IF) {
+             // Capture event occurred
+             TIM4->SR &= ~TIM_SR_CC1IF; // Clear the capture/compare interrupt flag
+            if(encoder.IsInitialized()){
+                encoder.UpdateIndex();
+            } else {
+
+            }
+            
+        }   
     }
 
     void TIM3_IRQHandler_CXX() {
-        if(encoder.IsInitialized()){
-            encoder.UpdateEncoderUpperCount();
+        if (TIM3->SR & TIM_SR_UIF) { // Check update event flag
+            TIM3->SR &= ~TIM_SR_UIF; // Clear update event flag
+            if(encoder.IsInitialized()){
+                encoder.UpdateEncoderUpperCount();
+            }
         }
     }
 
