@@ -5,7 +5,7 @@ extern "C" {
 #include <core_cm3.h>
 #include "encoder.hpp"
 #include "debug.hpp"
-
+#include "cmsis_os2.h"
 #include <etl/string.h>
 
 extern EncoderABZ encoder;
@@ -65,6 +65,21 @@ void SystemClockInit(void) {
     SystemCoreClockUpdate();
 }
 
+void DebugOutputTask(void *pvParameters) {
+    DebugLogger& debugLog = DebugLog::instance();
+    while (1) {
+        etl::string<100> debugOutput;
+        debugLog.Debug(debugLog.Format("Position: %lu, Angle: %hu/%hu, RPM: %hu\r\n", 
+            encoder.GetFullIndexCounts(), 
+            encoder.GetAngularPositionInCounts(), 
+            encoder.GetTotalAngularCounts(),
+            encoder.GetRpm()
+        ).c_str());
+
+        osDelay(1000); // Delay for 1000 ms
+    }
+}
+
 
 int main(void) {
     SystemClockInit();
@@ -72,18 +87,25 @@ int main(void) {
     debugLog.Init();
     encoder.Init();
 
-    etl::string<100> debugOutput;
+    osKernelInitialize(); // Initialize CMSIS-RTOS
 
+    // Create the task
+    osThreadAttr_t debugOutputTask_attributes = {};
+    debugOutputTask_attributes.name = "Debug-UART-Output";
+    debugOutputTask_attributes.stack_size = 128 * 4;  // Adjust stack size as needed
+    debugOutputTask_attributes.priority = (osPriority_t) osPriorityNormal;
+
+    osThreadNew(DebugOutputTask, NULL, &debugOutputTask_attributes);
+
+    osKernelStart(); // Start thread execution
+
+
+    //shouldn't get ht due to RTOS
     while (1) {
         
-        debugLog.Debug(debugLog.Format("Position: %lu, Angle: %hu/%hu, RPM: %hu\r\n", 
-        encoder.GetFullIndexCounts(), 
-        encoder.GetAngularPositionInCounts(), 
-        encoder.GetTotalAngularCounts(), // Assuming this is the correct method for the third value
-        encoder.GetRpm() 
-        ).c_str());
+        
 
         
-        for (int i = 0; i < portTICK; i++); // Delay
+        for (int i = 0; i < 1000000; i++); // Delay
     }
 }
