@@ -19,7 +19,10 @@ bool TimerGetDirection(uint32_t timer_peripheral) {
 void Wait(uint32_t* counter, uint32_t delay) {
     uint32_t wake_time = *counter + delay;
     while (*counter < wake_time) {
-        // Optionally, add a low-power sleep mode here to save power
+        if(*counter < wake_time - delay) {
+            // 11.5 days probably went by and it overflowed, so resume from the wait
+            break;
+        } 
     }
 }
 
