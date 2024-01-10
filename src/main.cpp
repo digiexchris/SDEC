@@ -1,15 +1,17 @@
 extern "C" {
-    #include <stm32f1xx.h>
+    //#include <stm32f1xx.h>
 }
 #include <stdio.h>
-#include <core_cm3.h>
+#include <libopencm3/stm32/rcc.h>
 #include "encoder.hpp"
+#include "encoder.h"
 #include "debug.hpp"
-#include "cmsis_os2.h"
 #include <etl/string.h>
+#include <libopencm3/cm3/nvic.h>
+#include "Helpers.hpp"
 
 extern EncoderABZ encoder;
-
+static uint32_t systick_counter = 0;
 /**
  * Pinout:
  * PA0 - TIM2 CH1 (Encoder input)
@@ -28,46 +30,39 @@ extern EncoderABZ encoder;
 */\
 
 void SystemClockInit(void) {
-    // Enable HSE (High-Speed External) oscillator
-    RCC->CR |= RCC_CR_HSEON;
-
-    // Wait until HSE is ready
-    while (!(RCC->CR & RCC_CR_HSERDY)) {}
+    // Initialize the High-Speed External (HSE) oscillator
+    rcc_osc_on(RCC_HSE);
+    rcc_wait_for_osc_ready(RCC_HSE);
 
     // Set the PLL multiplication factor to 9 (8 MHz * 9 = 72 MHz)
-    RCC->CFGR |= RCC_CFGR_PLLMULL9;
+    // Also, set the PLL source to HSE
+    rcc_set_pll_multiplication_factor(RCC_CFGR_PLLMUL_PLL_CLK_MUL9);
+    rcc_set_pll_source(RCC_CFGR_PLLSRC_HSE_CLK);
 
-    // Set PLL source to HSE
-    RCC->CFGR |= RCC_CFGR_PLLSRC;
+    // Turn on the PLL
+    rcc_osc_on(RCC_PLL);
+    rcc_wait_for_osc_ready(RCC_PLL);
 
-    // Enable PLL
-    RCC->CR |= RCC_CR_PLLON;
-
-    // Wait until PLL is ready
-    while (!(RCC->CR & RCC_CR_PLLRDY)) {}
-
-    // Set AHB prescaler to 1
-    RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
-
-    // Set APB1 prescaler to 2 (36 MHz max for APB1)
-    RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;
-
-    // Set APB2 prescaler to 1
-    RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;
+    // Set AHB prescaler to 1, APB1 prescaler to 2 (36 MHz max for APB1), and APB2 prescaler to 1
+    rcc_set_hpre(RCC_CFGR_HPRE_SYSCLK_NODIV);
+    rcc_set_ppre1(RCC_CFGR_PPRE1_HCLK_DIV2);
+    rcc_set_ppre2(RCC_CFGR_PPRE2_HCLK_NODIV);
 
     // Select PLL as the system clock source
-    RCC->CFGR |= RCC_CFGR_SW_PLL;
+    rcc_set_sysclk_source(RCC_CFGR_SW_SYSCLKSEL_PLLCLK);
 
     // Wait until PLL is used as the system clock source
-    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) {}
-
-    // Update the SystemCoreClock variable
-    SystemCoreClockUpdate();
+    while (rcc_system_clock_source() != RCC_CFGR_SWS_SYSCLKSEL_PLLCLK);
 }
 
-void DebugOutputTask(void *pvParameters) {
+void sys_tick_handler(void) {
+    systick_counter++;
+
+    Calculate_RPM_Handler_CXX();
+}
+
+void DebugOutput() {
     DebugLogger& debugLog = DebugLog::instance();
-    while (1) {
         etl::string<100> debugOutput;
         debugLog.Debug(debugLog.Format("Position: %lu, Angle: %hu/%hu, RPM: %hu\r\n", 
             encoder.GetFullIndexCounts(), 
@@ -75,37 +70,19 @@ void DebugOutputTask(void *pvParameters) {
             encoder.GetTotalAngularCounts(),
             encoder.GetRpm()
         ).c_str());
-
-        osDelay(1000); // Delay for 1000 ms
-    }
 }
-
 
 int main(void) {
     SystemClockInit();
+    Helpers::SystickSetup(rcc_ahb_frequency / 1000);
     DebugLogger& debugLog = DebugLog::instance();
     debugLog.Init();
     encoder.Init();
 
-    osKernelInitialize(); // Initialize CMSIS-RTOS
-
-    // Create the task
-    osThreadAttr_t debugOutputTask_attributes = {};
-    debugOutputTask_attributes.name = "Debug-UART-Output";
-    debugOutputTask_attributes.stack_size = 128 * 4;  // Adjust stack size as needed
-    debugOutputTask_attributes.priority = (osPriority_t) osPriorityNormal;
-
-    osThreadNew(DebugOutputTask, NULL, &debugOutputTask_attributes);
-
-    osKernelStart(); // Start thread execution
-
-
     //shouldn't get ht due to RTOS
     while (1) {
-        
-        
 
-        
-        for (int i = 0; i < 1000000; i++); // Delay
+        DebugOutput();
+        Helpers::Wait(&systick_counter, 1000);
     }
 }

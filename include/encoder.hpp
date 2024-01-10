@@ -1,8 +1,6 @@
 #ifndef __ENCODER_HPP
 #define __ENCODER_HPP
 
-#include <stm32f1xx.h>
-
 class EncoderABZ {
     public:
         EncoderABZ();

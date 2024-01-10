@@ -1,13 +1,13 @@
 #include "debug.hpp"
-extern "C" {
-    #include <stm32f1xx.h>
-}
+#include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/usart.h>
 #include "helpers.hpp"
 #include "etl_profile.h"
 #include <stdio.h>
-#include <core_cm3.h>
 #include <stdarg.h>
 #include <etl/string.h>
+
 
 void DebugLogger::Init() {
     USART2_Init();
@@ -15,21 +15,25 @@ void DebugLogger::Init() {
 }
 
 void DebugLogger::USART2_Init(void) {
-    SystemCoreClockUpdate();
-    
-    // Enable clocks for USART2 and GPIOA
-    RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
-    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+    rcc_periph_clock_enable(RCC_USART2);
+    rcc_periph_clock_enable(RCC_GPIOA);
 
     // Configure PA2 (USART2 TX) and PA3 (USART2 RX)
-    GPIOA->CRL &= ~(GPIO_CRL_CNF2 | GPIO_CRL_MODE2 | GPIO_CRL_CNF3 | GPIO_CRL_MODE3);
-    GPIOA->CRL |= GPIO_CRL_CNF2_1 | GPIO_CRL_MODE2_0; // USART2 TX
-    GPIOA->CRL |= GPIO_CRL_CNF3_0 | GPIO_CRL_MODE3_0; // USART2 RX
+    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
+                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART2_TX);
+    gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
+                  GPIO_CNF_INPUT_FLOAT, GPIO_USART2_RX);
 
     // USART2 configuration
-    USART2->BRR = GetPCLK1Frequency() / 9600;  // Assuming 72MHz PCLK1 for USART2
-    USART2->CR1 |= USART_CR1_TE | USART_CR1_RE; // Enable TX and RX
-    USART2->CR1 |= USART_CR1_UE; // Enable USART2
+    usart_set_baudrate(USART2, 9600); // Assuming 72MHz PCLK1 for USART2
+    usart_set_databits(USART2, 8);
+    usart_set_stopbits(USART2, USART_STOPBITS_1);
+    usart_set_mode(USART2, USART_MODE_TX_RX);
+    usart_set_parity(USART2, USART_PARITY_NONE);
+    usart_set_flow_control(USART2, USART_FLOWCONTROL_NONE);
+
+    // Enable USART2
+    usart_enable(USART2);
 }
 
 void DebugLogger::Debug(const char* str, const char* func, uint16_t line) {
@@ -40,14 +44,9 @@ void DebugLogger::Debug(etl::string<100> str, const char* func, uint16_t line) {
     Debug(str.c_str(), func, line);
 }
 
-void DebugLogger::SendChar(const char ch) {
-    while (!(USART2->SR & USART_SR_TXE)); // Wait until TX is empty
-    USART2->DR = ch;
-}
-
 void DebugLogger::SendString(const char* str) {
     while (*str) {
-        SendChar(*str++);
+        usart_send_blocking(USART2, *str++); // Send current char and move to next
     }
 }
 

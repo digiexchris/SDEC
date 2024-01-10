@@ -1,7 +1,4 @@
 #pragma once
-extern "C" {
-    #include <stm32f1xx.h>
-}
 
 #include <etl/string.h>
 #include <etl/singleton.h>
@@ -19,9 +16,6 @@ public:
 
 private:
     
-
-    // Other private methods
-    void SendChar(const char ch);
     void SendString(const char* str);
     void USART2_Init(void);
 };
