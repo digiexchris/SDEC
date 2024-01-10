@@ -30,26 +30,7 @@ static uint32_t systick_counter = 0;
 */\
 
 void SystemClockInit(void) {
-    // Initialize the High-Speed External (HSE) oscillator
-    rcc_osc_on(RCC_HSE);
-    rcc_wait_for_osc_ready(RCC_HSE);
-
-    // Set the PLL multiplication factor to 9 (8 MHz * 9 = 72 MHz)
-    // Also, set the PLL source to HSE
-    rcc_set_pll_multiplication_factor(RCC_CFGR_PLLMUL_PLL_CLK_MUL9);
-    rcc_set_pll_source(RCC_CFGR_PLLSRC_HSE_CLK);
-
-    // Turn on the PLL
-    rcc_osc_on(RCC_PLL);
-    rcc_wait_for_osc_ready(RCC_PLL);
-
-    // Set AHB prescaler to 1, APB1 prescaler to 2 (36 MHz max for APB1), and APB2 prescaler to 1
-    rcc_set_hpre(RCC_CFGR_HPRE_SYSCLK_NODIV);
-    rcc_set_ppre1(RCC_CFGR_PPRE1_HCLK_DIV2);
-    rcc_set_ppre2(RCC_CFGR_PPRE2_HCLK_NODIV);
-
-    // Select PLL as the system clock source
-    rcc_set_sysclk_source(RCC_CFGR_SW_SYSCLKSEL_PLLCLK);
+    rcc_clock_setup_in_hse_8mhz_out_72mhz();
 
     // Wait until PLL is used as the system clock source
     while (rcc_system_clock_source() != RCC_CFGR_SWS_SYSCLKSEL_PLLCLK);

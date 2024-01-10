@@ -10,8 +10,8 @@ public:
         Init(); // Call Init inside the constructor
     }
     void Init(void);
-    void Debug(const char* str, const char* func = __FUNCTION__ , uint16_t line = __LINE__);
-    void Debug(etl::string<100> str,  const char* func = __FUNCTION__ , uint16_t line = __LINE__);
+    void Debug(const char* str, const char* func = __FILE__ , uint16_t line = __LINE__);
+    void Debug(etl::string<100> str,  const char* func = __FILE__ , uint16_t line = __LINE__);
     etl::string<100> Format(const char* str, ...);
 
 private:

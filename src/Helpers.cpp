@@ -33,7 +33,7 @@ void SystickSetup(uint32_t ticks) {
 
     // Set priority for Systick interrupt
     nvic_set_priority(NVIC_SYSTICK_IRQ, RPM_PRIORITY);
-
+    
 
     systick_set_reload(ticks);
     systick_clear();  // Reset the current value to zero
