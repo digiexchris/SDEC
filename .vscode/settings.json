@@ -1,6 +1,7 @@
 {
     "idf.portWin": "COM22",
     "files.associations": {
-        "rte_components.h": "c"
+        "rte_components.h": "c",
+        "encoder.h": "c"
     }
 }

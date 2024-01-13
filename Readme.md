@@ -1,11 +1,18 @@
 # Stm32 Dedicated Encoder Counter (SDEC)
-Many Electronic Lead Screw projects struggle with timing reading the encoder input and generating stepper steps with the correct timing without ever missing either an encoder pulse, or a stepper pulse.
+Many Electronic Lead Screw projects struggle with timing reading the encoder input and generating stepper steps with the correct timing without ever missing either an encoder pulse, or a stepper pulse. This project aims to offload the position tracking of the spindle to an additional microcontroller, eliminating the common behaviour of turning interrupts on and off, potentially losing position. Additionally, this uses an additional signal to self-heal from any missed or extra steps in 1 spindle rotation.
+
+This uses an STM32F103C8T6 (the ubiquitous Blue Pill) which as hardware timers that have a dedicated QEI (Quadrature Encoder Interface) mode, making counting very efficient.
 
 ## Current functionality
 - Configurable only at compile time and not dynamic:
     - Encoder mode (X1, X2, X4)
     - PPR
-    - Debugging output over USART2
+    - Pullups, pulldowns, none (external resistors)
+- Debugging output over USART2
+    - example: src\main.cpp:53:DebugOutput(): Position: 2147483664, Angle: 42/192, RPM: 0
+
+## TODO:
+- SPI interface to interact with main MCU
 
 ## How to use
 Precompiled binaries are in TODO and can be flashed using TODO with an SWD, JTAG, or UART dongle.

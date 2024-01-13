@@ -19,10 +19,9 @@ class EncoderABZ {
         bool isInitialized;
         void ABTimer_Encoder_Init_16bit(void);
         void Z_Init_32bit(void);
-        void SysTick_Init(void);
         
-        volatile uint16_t upperCounter;
-        volatile uint32_t lastEncoderCount;
+        volatile uint32_t zCount;
+        volatile uint32_t lastZCount;
 
         //65,535 maximum rpm, should be plenty!
         volatile uint16_t rpm; 

@@ -36,12 +36,12 @@ void DebugLogger::USART2_Init(void) {
     usart_enable(USART2);
 }
 
-void DebugLogger::Debug(const char* str, const char* func, uint16_t line) {
-    SendString(Format( "%s:%d: %s\r\n", func, line, str).c_str());
+void DebugLogger::Debug(const char* str, const char* file, uint16_t line, const char* func) {
+    SendString(Format( "%s:%d:%s(): %s\r\n", file, line, func, str).c_str());
 }
 
-void DebugLogger::Debug(etl::string<100> str, const char* func, uint16_t line) {
-    Debug(str.c_str(), func, line);
+void DebugLogger::Debug(etl::string<100> str, const char* file, uint16_t line, const char* func) {
+    Debug(str.c_str(), file, line, func);
 }
 
 void DebugLogger::SendString(const char* str) {

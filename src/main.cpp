@@ -45,7 +45,7 @@ void sys_tick_handler(void) {
 void DebugOutput() {
     DebugLogger& debugLog = DebugLog::instance();
         etl::string<100> debugOutput;
-        debugLog.Debug(debugLog.Format("Position: %lu, Angle: %hu/%hu, RPM: %hu\r\n", 
+        DEBUG(debugLog.Format("Position: %lu, Angle: %hu/%hu, RPM: %hu\r\n", 
             encoder.GetFullIndexCounts(), 
             encoder.GetAngularPositionInCounts(), 
             encoder.GetTotalAngularCounts(),
